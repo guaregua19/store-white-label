@@ -11,29 +11,6 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Resultado serializable de una llamada al backend. Los cuerpos con "use cache"
- * se serializan, y un ApiError lanzado dentro llegaría al llamador como un Error
- * genérico (sin status), así que se cachea el resultado y se relanza afuera.
- */
-export type ApiResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; status: number; message: string; code?: string };
-
-export async function settle<T>(promise: Promise<T>): Promise<ApiResult<T>> {
-  try {
-    return { ok: true, data: await promise };
-  } catch (e) {
-    if (e instanceof ApiError) return { ok: false, status: e.status, message: e.message, code: e.code };
-    throw e;
-  }
-}
-
-export function unwrap<T>(result: ApiResult<T>): T {
-  if (result.ok) return result.data;
-  throw new ApiError(result.status, result.message, result.code);
-}
-
 export function isNotFoundOrBlocked(e: unknown): e is ApiError {
   return e instanceof ApiError && (e.status === 404 || e.status === 403);
 }
